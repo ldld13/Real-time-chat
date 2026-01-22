@@ -161,18 +161,17 @@ async def autocomplete_ai(request):
     def call_api():
         # prompt: polish/complete user's message with concise, polite replies that continue the intent
         messages = [
-            {"role": "system", "content": "你是话术/补全助手。根据用户输入，生成 3 条自然、口语友好、礼貌得体的续写/改写/补全，帮助完善表达（如把简短词组扩展为完整问候或礼貌询问）。每条不超过 40 字，只输出候选文本，每条单独一行，不要编号、不加额外说明。"},
+            {"role": "system", "content": "你是话术/补全助手。你根据我的输入的词，理解我的语义，补全或扩展，以同样的人称视角。根据用户输入，生成 3 条自然、口语友好、礼貌得体的续写/改写/补全，帮助完善表达（如把简短词组扩展为完整问候或礼貌询问）。每条不超过 40 字，只输出候选文本，每条单独一行，不要编号、不加额外说明。"},
             {"role": "user", "content": f"用户输入：\"{text}\""}
         ]
-        attempts = 3
+        attempts = 2  # reduce retries to avoid long waits
         for attempt in range(1, attempts + 1):
             try:
                 resp = client.chat.completions.create(
                     model="glm-4-flash",
                     messages=messages,
-                    thinking={"type": "enabled"},
-                    max_tokens=512,
-                    temperature=0.7
+                    max_tokens=200,  # smaller for faster response
+                    temperature=0.6  # slightly more conservative
                 )
                 return resp
             except Exception as e:
@@ -187,7 +186,8 @@ async def autocomplete_ai(request):
                 raise
 
     try:
-        resp = await asyncio.to_thread(call_api)
+        # overall timeout to avoid long waits
+        resp = await asyncio.wait_for(asyncio.to_thread(call_api), timeout=6)
     except Exception:
         return web.json_response({'suggestions': []})
 

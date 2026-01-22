@@ -111,7 +111,7 @@
 
   function requestAiSuggestions(text){
     const loadingEl = el('suggestLoading');
-    const aiBtn = el('suggestAiBtn');
+    const aiBtn = null; // AI button removed
     const list = el('suggestList');
     if(!text || !text.trim()) return;
     const trimmed = text.trim();
@@ -128,7 +128,7 @@
     if(aiController){ aiController.abort(); }
     aiController = new AbortController();
     const controller = aiController;
-    const timeout = setTimeout(()=> controller.abort(), 8000);
+    const timeout = setTimeout(()=> controller.abort(), 12000);
 
     const clearEmpty = ()=>{
       const ex = list && list.querySelector('.suggest-empty');
@@ -168,15 +168,15 @@
         }
       })
       .catch(err => {
+        if(err && err.name === 'AbortError'){ return; }
         console.debug('AI suggestions fetch failed:', err);
-        // show an inline message for failures
         if(list){
           clearEmpty();
           const errEl = document.createElement('div');
           errEl.className = 'suggest-empty';
-          errEl.textContent = 'AI 请求失败或超时，请稍后再试。';
+          errEl.textContent = 'AI 生成中...';
           errEl.style.padding = '8px';
-          errEl.style.color = '#a00';
+          errEl.style.color = '#1877f2';
           list.appendChild(errEl);
           const panel = el('suggestPanel'); if(panel){ panel.classList.remove('collapsed'); panel.setAttribute('aria-hidden','false'); }
         }
