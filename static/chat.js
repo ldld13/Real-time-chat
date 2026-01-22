@@ -158,7 +158,7 @@
             clearEmpty();
             const empty = document.createElement('div');
             empty.className = 'suggest-empty';
-            empty.textContent = '未生成 AI 建议（返回空）。';
+            empty.textContent = 'No AI suggestions returned.';
             empty.style.padding = '8px';
             empty.style.color = '#666';
             list.appendChild(empty);
@@ -174,7 +174,7 @@
           clearEmpty();
           const errEl = document.createElement('div');
           errEl.className = 'suggest-empty';
-          errEl.textContent = 'AI 请求失败或超时，请稍后再试。';
+          errEl.textContent = 'AI request failed or timed out. Please try again.';
           errEl.style.padding = '8px';
           errEl.style.color = '#a00';
           list.appendChild(errEl);
@@ -191,7 +191,7 @@
 
   // --- WebSocket and main logic ---
   function updateUsersList(names){
-    const list = el('usersList'); if(!list) return; list.innerHTML = ''; names.forEach(n => { const li = document.createElement('li'); li.textContent = n + (n === name ? ' (我)' : ''); list.appendChild(li); });
+    const list = el('usersList'); if(!list) return; list.innerHTML = ''; names.forEach(n => { const li = document.createElement('li'); li.textContent = n + (n === name ? ' (me)' : ''); list.appendChild(li); });
   }
 
   function connectWs(){

@@ -8,22 +8,54 @@
 </head>
 <body>
   <div id="wrap">
-    <div id="login" class="panel">
-      <h1>欢迎</h1>
-      <input id="nameInput" placeholder="输入你的名字" maxlength="32" />
-      <button id="joinBtn">进入聊天室</button>
+    <div class="auth-shell panel">
+      <div class="auth-visual">
+        <div class="auth-badge">ADOS</div>
+        <h1>Welcome Back!</h1>
+        <p class="auth-subtitle">To keep connected with your team, sign in with your display name and join the live room.</p>
+        <div class="auth-points">
+          <div class="auth-point">Real-time presence</div>
+          <div class="auth-point">Zero-setup join</div>
+          <div class="auth-point">AI-assisted replies</div>
+        </div>
+        <div class="auth-footnote">Inspired by Google-level simplicity & clarity</div>
+      </div>
+
+      <div id="login" class="auth-form-card">
+        <div class="form-head">
+          <span class="chip">Secure sign-in</span>
+          <h2>Sign In</h2>
+          <p class="form-sub">Use a display name to enter the chat. You can change it later.</p>
+        </div>
+        <form id="loginForm" class="form-body">
+          <label class="field">
+            <span class="field-label">Display name</span>
+            <input id="nameInput" name="name" placeholder="e.g. Alex or Taylor" maxlength="32" autocomplete="off" />
+          </label>
+          <button id="joinBtn" type="submit" class="primary-btn">Enter chat</button>
+          <div class="form-hint">Press Enter to continue. Data stays in this session only.</div>
+        </form>
+      </div>
     </div>
   </div>
   <script>
     (function(){
       const el = id => document.getElementById(id);
-      el('joinBtn').addEventListener('click', ()=>{
+      const form = document.getElementById('loginForm');
+
+      form.addEventListener('submit', e => {
+        e.preventDefault();
         const v = el('nameInput').value.trim();
         if(!v){ alert('请输入名字'); return; }
         sessionStorage.setItem('chat_name', v);
         location.href = '/chat';
       });
-      el('nameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') el('joinBtn').click(); });
+
+      el('nameInput').addEventListener('keydown', e => {
+        if(e.key === 'Enter') {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      });
     })();
   </script>
 </body>

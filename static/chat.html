@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>聊天室</title>
+  <title>Live Chat</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -12,22 +12,22 @@
       <aside id="sidebar" class="sidebar">
         <div class="me">
           <div id="myName" class="me-name">—</div>
-          <button id="logoutBtn">退出</button>
+          <button id="logoutBtn">Sign out</button>
         </div>
-        <div class="users-title">在线用户</div>
+        <div class="users-title">Online</div>
         <ul id="usersList" class="users-list"></ul>
       </aside>
 
       <main class="chat-main">
-        <div id="header">聊天室</div>
+        <div id="header">Live chat</div>
         <div id="messages" aria-live="polite"></div>
 
         <!-- Collapsible suggestion panel placed above the input form -->
         <div id="suggestPanel" class="suggest-panel collapsed" aria-hidden="true">
           <div class="suggest-panel-header">
-            <div class="suggest-title">建议回复</div>
-            <span id="suggestLoading" class="suggest-loading" aria-hidden="true" style="display:none">生成中...</span>
-            <button id="suggestAiBtn" class="suggest-ai-btn" title="点击向 AI 请求建议">AI 建议</button>
+            <div class="suggest-title">Suggested replies</div>
+            <span id="suggestLoading" class="suggest-loading" aria-hidden="true" style="display:none">Generating...</span>
+            <button id="suggestAiBtn" class="suggest-ai-btn" title="Ask AI for suggestions">AI suggest</button>
             <button id="suggestToggle" class="suggest-toggle" aria-expanded="false">▲</button>
           </div>
           <div id="suggestList" class="suggest-list" role="list"></div>
@@ -35,12 +35,12 @@
 
         <!-- Show button shown when panel is collapsed -->
         <div class="suggest-show-wrapper">
-          <button id="suggestShowBtn" class="suggest-show-btn" aria-expanded="false">显示建议</button>
+          <button id="suggestShowBtn" class="suggest-show-btn" aria-expanded="false">Show suggestions</button>
         </div>
 
         <form id="msgForm">
-          <input id="msgInput" autocomplete="off" placeholder="输入消息然后按 Enter" maxlength="1000" />
-          <button type="submit">发送</button>
+          <input id="msgInput" autocomplete="off" placeholder="Type a message and hit Enter" maxlength="1000" />
+          <button type="submit">Send</button>
         </form>
       </main>
     </div>
