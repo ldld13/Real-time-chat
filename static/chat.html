@@ -21,6 +21,22 @@
       <main class="chat-main">
         <div id="header">聊天室</div>
         <div id="messages" aria-live="polite"></div>
+
+        <!-- Collapsible suggestion panel placed above the input form -->
+        <div id="suggestPanel" class="suggest-panel collapsed" aria-hidden="true">
+          <div class="suggest-panel-header">
+            <div class="suggest-title">建议回复</div>
+            <span id="suggestLoading" class="suggest-loading" aria-hidden="true" style="display:none">生成中...</span>
+            <button id="suggestToggle" class="suggest-toggle" aria-expanded="false">▲</button>
+          </div>
+          <div id="suggestList" class="suggest-list" role="list"></div>
+        </div>
+
+        <!-- Show button shown when panel is collapsed -->
+        <div class="suggest-show-wrapper">
+          <button id="suggestShowBtn" class="suggest-show-btn" aria-expanded="false">显示建议</button>
+        </div>
+
         <form id="msgForm">
           <input id="msgInput" autocomplete="off" placeholder="输入消息然后按 Enter" maxlength="1000" />
           <button type="submit">发送</button>
