@@ -15,8 +15,8 @@ html, body, #wrap { height: 100%; margin: 0; }
 body { background: radial-gradient(circle at 20% 20%, #f0e9ff 0%, #e6dcff 35%, #e9e2ff 65%, #f4f0ff 100%); color: var(--slate-1); }
 #wrap { display: flex; align-items: center; justify-content: center; padding: 56px 24px; }
 #login{display:flex;flex-direction:column;gap:16px;padding:10px 0;}
-.enter-visual { display: flex; justify-content: center; margin-top: 10px; }
-.enter-visual img { width: 140px; height: auto; opacity: 0.95; filter: drop-shadow(0 12px 26px rgba(0,0,0,0.18)); }
+.enter-visual { display: flex; justify-content: center; margin-top: 40px; }
+.enter-visual img { width: 140px; height: auto; opacity: 0.95; filter: none; }
 
 /* Auth */
 .auth-shell { position: relative; display: grid; grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr); width: 100%; max-width: 1280px; min-height: 580px; overflow: hidden; background: #ffffff; border-radius: 20px; box-shadow: var(--panel-shadow); animation: floatUp 320ms ease; }
