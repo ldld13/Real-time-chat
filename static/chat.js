@@ -169,17 +169,7 @@
       })
       .catch(err => {
         console.debug('AI suggestions fetch failed:', err);
-        // show an inline message for failures
-        if(list){
-          clearEmpty();
-          const errEl = document.createElement('div');
-          errEl.className = 'suggest-empty';
-          errEl.textContent = 'AI request failed or timed out. Please try again.';
-          errEl.style.padding = '8px';
-          errEl.style.color = '#a00';
-          list.appendChild(errEl);
-          const panel = el('suggestPanel'); if(panel){ panel.classList.remove('collapsed'); panel.setAttribute('aria-hidden','false'); }
-        }
+        // silence UI errors; keep panel state unchanged
       })
       .finally(()=>{
         clearTimeout(timeout);
