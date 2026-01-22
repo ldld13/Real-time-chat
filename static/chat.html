@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>聊天室</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div id="wrap">
+    <div id="chatShell" class="panel chat-shell">
+      <aside id="sidebar" class="sidebar">
+        <div class="me">
+          <div id="myName" class="me-name">—</div>
+          <button id="logoutBtn">退出</button>
+        </div>
+        <div class="users-title">在线用户</div>
+        <ul id="usersList" class="users-list"></ul>
+      </aside>
+
+      <main class="chat-main">
+        <div id="header">聊天室</div>
+        <div id="messages" aria-live="polite"></div>
+        <form id="msgForm">
+          <input id="msgInput" autocomplete="off" placeholder="输入消息然后按 Enter" maxlength="1000" />
+          <button type="submit">发送</button>
+        </form>
+      </main>
+    </div>
+  </div>
+  <script src="/static/chat.js"></script>
+</body>
+</html>
