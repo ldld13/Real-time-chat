@@ -176,6 +176,21 @@
     console.debug('[requestAiSuggestions] text=', text);
     if(aiBtn) { aiBtn.disabled = true; }
     if(loadingEl){ loadingEl.style.display='inline'; loadingEl.setAttribute('aria-hidden','false'); }
+    // show panel and a pending placeholder so user sees progress
+    const panel = el('suggestPanel');
+    if(panel){ panel.classList.remove('collapsed'); panel.setAttribute('aria-hidden','false'); }
+    if(list){
+      const pendingId = 'suggest-pending';
+      const existing = list.querySelector('#' + pendingId);
+      if(existing) existing.remove();
+      const pending = document.createElement('div');
+      pending.id = pendingId;
+      pending.className = 'suggest-empty';
+      pending.textContent = 'Generating suggestions...';
+      pending.style.padding = '8px';
+      pending.style.color = '#555';
+      list.prepend(pending);
+    }
 
     // cancel previous request if still pending
     if(aiController){ aiController.abort(); }
@@ -228,6 +243,10 @@
         clearTimeout(timeout);
         if(loadingEl){ loadingEl.style.display='none'; loadingEl.setAttribute('aria-hidden','true'); }
         if(aiBtn) { aiBtn.disabled = false; }
+        if(list){
+          const pending = list.querySelector('#suggest-pending');
+          if(pending) pending.remove();
+        }
         if(controller === aiController){ aiController = null; }
       });
   }
