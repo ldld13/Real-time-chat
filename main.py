@@ -5,6 +5,7 @@ import uuid
 import time
 import os
 from pathlib import Path
+import traceback
 
 ROOT = Path(__file__).parent
 STATIC_DIR = ROOT / 'static'
@@ -122,11 +123,112 @@ async def chat_page(request):
     return web.FileResponse(STATIC_DIR / 'chat.html')
 
 
+async def autocomplete_ai(request):
+    """Generate suggestions via Zhipu AI.
+    Expects JSON: {"text": "..."}
+    Returns JSON: {"suggestions": ["...", ...]}
+    """
+    try:
+        data = await request.json()
+    except Exception as e:
+        print('[autocomplete_ai] failed to parse request json:', e)
+        return web.json_response({'suggestions': []})
+
+    text = (data.get('text') or '').strip()
+    print(f"[autocomplete_ai] request text: '{text}'")
+    if not text:
+        return web.json_response({'suggestions': []})
+
+    zkey = os.environ.get('ZHIPU_API_KEY')
+    if not zkey:
+        print('[autocomplete_ai] ZHIPU_API_KEY not set')
+        return web.json_response({'suggestions': []})
+
+    try:
+        from zai import ZhipuAiClient
+    except Exception as e:
+        print('[autocomplete_ai] import zai-sdk failed:', e)
+        traceback.print_exc()
+        return web.json_response({'suggestions': []})
+
+    try:
+        client = ZhipuAiClient(api_key=zkey)
+    except Exception as e:
+        print('[autocomplete_ai] failed to create client:', e)
+        traceback.print_exc()
+        return web.json_response({'suggestions': []})
+
+    def call_api():
+        # prompt: polish/complete user's message with concise, polite replies that continue the intent
+        messages = [
+            {"role": "system", "content": "你是话术/补全助手。根据用户输入，生成 3 条自然、口语友好、礼貌得体的续写/改写/补全，帮助完善表达（如把简短词组扩展为完整问候或礼貌询问）。每条不超过 40 字，只输出候选文本，每条单独一行，不要编号、不加额外说明。"},
+            {"role": "user", "content": f"用户输入：\"{text}\""}
+        ]
+        attempts = 3
+        for attempt in range(1, attempts + 1):
+            try:
+                resp = client.chat.completions.create(
+                    model="glm-4-flash",
+                    messages=messages,
+                    thinking={"type": "enabled"},
+                    max_tokens=512,
+                    temperature=0.7
+                )
+                return resp
+            except Exception as e:
+                errstr = str(e)
+                print(f"[autocomplete_ai] API call exception (attempt {attempt}): {errstr}")
+                traceback.print_exc()
+                if attempt < attempts and ("429" in errstr or "并发" in errstr or "超" in errstr):
+                    backoff = 1 * (2 ** (attempt - 1))
+                    print(f"[autocomplete_ai] retrying after {backoff}s due to rate limit")
+                    time.sleep(backoff)
+                    continue
+                raise
+
+    try:
+        resp = await asyncio.to_thread(call_api)
+    except Exception:
+        return web.json_response({'suggestions': []})
+
+    # parse response
+    raw = ''
+    try:
+        msg = resp.choices[0].message
+        if isinstance(msg, str):
+            raw = msg
+        else:
+            raw = getattr(msg, 'content', str(msg))
+    except Exception as e:
+        print('[autocomplete_ai] failed to extract message from resp:', e)
+        traceback.print_exc()
+        raw = ''
+
+    suggestions = []
+    if raw:
+        # split by line breaks or sentence punctuation
+        parts = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        if not parts:
+            import re
+            parts = [p.strip() for p in re.split(r'[。！？;；\n]+', raw) if p.strip()]
+        seen = set()
+        for p in parts:
+            if p not in seen:
+                suggestions.append(p)
+                seen.add(p)
+            if len(suggestions) >= 3:
+                break
+
+    print(f"[autocomplete_ai] returning {len(suggestions)} suggestions")
+    return web.json_response({'suggestions': suggestions})
+
+
 def create_app():
     app = web.Application()
     app.router.add_get('/', index)
     app.router.add_get('/chat', chat_page)
     app.router.add_get('/ws', handle_ws)
+    app.router.add_post('/autocomplete_ai', autocomplete_ai)
     app.router.add_static('/static/', path=str(STATIC_DIR), name='static')
     return app
 
