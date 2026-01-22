@@ -109,6 +109,59 @@
     requestAiSuggestions(text);
   }, 500); // faster refresh
 
+  // --- Insights UI ---
+  function renderInsights(analyses){
+    const list = el('insightsList');
+    const status = el('insightsStatus');
+    if(!list) return;
+    list.innerHTML = '';
+    if(!analyses || !analyses.length){
+      if(status) status.textContent = 'No recent messages to analyze.';
+      return;
+    }
+    analyses.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'insight-card';
+      const user = document.createElement('div');
+      user.className = 'insight-user';
+      user.textContent = item.user || 'Unknown';
+      const badge = document.createElement('span');
+      badge.className = 'insight-badge';
+      badge.textContent = item.emotion || 'neutral';
+      user.appendChild(badge);
+
+      const inf = document.createElement('div');
+      inf.className = 'insight-text';
+      inf.textContent = item.inference || '';
+
+      const reply = document.createElement('div');
+      reply.className = 'insight-reply';
+      reply.textContent = item.suggested_reply || '';
+
+      card.appendChild(user);
+      card.appendChild(inf);
+      card.appendChild(reply);
+      list.appendChild(card);
+    });
+    if(status) status.textContent = 'Insights refreshed.';
+  }
+
+  function fetchInsights(){
+    const panel = el('insightsPanel');
+    const status = el('insightsStatus');
+    if(panel){ panel.classList.remove('hidden'); panel.setAttribute('aria-hidden','false'); }
+    if(status) status.textContent = 'Analyzing...';
+    fetch('/analyze_users', {method:'POST'}).then(r => {
+      if(!r.ok) throw new Error('bad response '+r.status);
+      return r.json();
+    }).then(data => {
+      renderInsights((data || {}).analyses || []);
+    }).catch(err => {
+      console.debug('insights fetch failed', err);
+      if(status) status.textContent = 'AI request failed, please retry.';
+    });
+  }
+
   function requestAiSuggestions(text){
     const loadingEl = el('suggestLoading');
     const aiBtn = el('suggestAiBtn');
@@ -203,6 +256,8 @@
     const panel = el('suggestPanel');
     const suggestShowBtn = el('suggestShowBtn');
     const suggestAiBtn = el('suggestAiBtn');
+    const insightsBtn = el('insightsBtn');
+    const insightsClose = el('insightsClose');
     if(panelToggle && panel){
       panelToggle.addEventListener('click', ()=>{
         const isCollapsed = panel.classList.toggle('collapsed');
@@ -235,6 +290,18 @@
       suggestAiBtn.addEventListener('click', ()=>{
         const text = input ? input.value : '';
         requestAiSuggestions(text);
+      });
+    }
+
+    if(insightsBtn){
+      insightsBtn.addEventListener('click', ()=>{
+        fetchInsights();
+      });
+    }
+    if(insightsClose){
+      insightsClose.addEventListener('click', ()=>{
+        const panel = el('insightsPanel');
+        if(panel){ panel.classList.add('hidden'); panel.setAttribute('aria-hidden','true'); }
       });
     }
 

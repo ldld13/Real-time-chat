@@ -19,7 +19,22 @@
       </aside>
 
       <main class="chat-main">
-        <div id="header">Live chat</div>
+        <div class="chat-header">
+          <div id="header">Live chat</div>
+          <div class="chat-actions">
+            <button id="insightsBtn" class="circle-btn" title="Emo insights">emo</button>
+          </div>
+        </div>
+        <div id="insightsPanel" class="insights-panel hidden" aria-hidden="true">
+          <div class="insights-head">
+            <div>
+              <div class="insights-title">AI emotional insights</div>
+              <div id="insightsStatus" class="insights-status">Click the AI button to refresh.</div>
+            </div>
+            <button id="insightsClose" class="ghost-btn" title="Close insights">×</button>
+          </div>
+          <div id="insightsList" class="insights-list" role="list"></div>
+        </div>
         <div id="messages" aria-live="polite"></div>
 
         <!-- Collapsible suggestion panel placed above the input form -->

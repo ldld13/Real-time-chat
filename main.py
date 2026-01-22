@@ -123,6 +123,91 @@ async def chat_page(request):
     return web.FileResponse(STATIC_DIR / 'chat.html')
 
 
+async def analyze_users(request):
+    """Aggregate recent messages per user and ask AI for sentiment/intent plus reply tips."""
+    if not MESSAGES:
+        return web.json_response({'analyses': []})
+
+    zkey = os.environ.get('ZHIPU_API_KEY')
+    if not zkey:
+        print('[analyze_users] ZHIPU_API_KEY not set')
+        return web.json_response({'analyses': []})
+
+    try:
+        from zai import ZhipuAiClient
+    except Exception as e:
+        print('[analyze_users] import zai-sdk failed:', e)
+        traceback.print_exc()
+        return web.json_response({'analyses': []})
+
+    try:
+        client = ZhipuAiClient(api_key=zkey)
+    except Exception as e:
+        print('[analyze_users] failed to create client:', e)
+        traceback.print_exc()
+        return web.json_response({'analyses': []})
+
+    # collect last few messages per user
+    grouped = {}
+    for m in MESSAGES[-MAX_HISTORY:]:
+        grouped.setdefault(m['name'], []).append(m['text'])
+    # keep only the latest 6 messages per user for brevity
+    for k, v in grouped.items():
+        grouped[k] = v[-6:]
+
+    def build_prompt():
+        blocks = []
+        for user, msgs in grouped.items():
+            joined = " \n- ".join(msgs)
+            blocks.append(f"User: {user}\nMessages:\n- {joined}")
+        joined_blocks = "\n\n".join(blocks)
+        sys = (
+            "You are an assistant that infers emotions/intent from chat snippets and suggests responses. "
+            "Be concise, empathetic, and practical."
+        )
+        user_prompt = (
+            "Below are recent messages grouped by user. "
+            "Infer each user's likely emotion (angry|sad|worried|neutral|positive|uncertain), a short inference, "
+            "and a brief reply suggestion that is tactful and ≤25 words. "
+            "Respond ONLY in JSON: {\"analyses\":[{\"user\":...,\"emotion\":...,\"inference\":...,\"suggested_reply\":...}]} ."
+            f"\n\n{joined_blocks}"
+        )
+        return sys, user_prompt
+
+    def call_api():
+        sys, uprompt = build_prompt()
+        return client.chat.completions.create(
+            model="glm-4-flash",
+            messages=[
+                {"role": "system", "content": sys},
+                {"role": "user", "content": uprompt},
+            ],
+            max_tokens=600,
+            temperature=0.6,
+        )
+
+    try:
+        resp = await asyncio.to_thread(call_api)
+    except Exception as e:
+        print('[analyze_users] API failed:', e)
+        traceback.print_exc()
+        return web.json_response({'analyses': _fallback_analyses(grouped)})
+
+    raw = ''
+    try:
+        msg = resp.choices[0].message
+        raw = msg if isinstance(msg, str) else getattr(msg, 'content', str(msg))
+    except Exception as e:
+        print('[analyze_users] failed to extract message:', e)
+        traceback.print_exc()
+
+    analyses = _parse_analyses_json(raw)
+    if not analyses:
+        analyses = _fallback_analyses(grouped)
+
+    return web.json_response({'analyses': analyses})
+
+
 async def autocomplete_ai(request):
     """Generate suggestions via Zhipu AI.
     Expects JSON: {"text": "..."}
@@ -223,11 +308,59 @@ async def autocomplete_ai(request):
     return web.json_response({'suggestions': suggestions})
 
 
+def _parse_analyses_json(raw: str):
+    if not raw:
+        return []
+    txt = raw.strip()
+    # remove fenced code if present
+    if txt.startswith('```'):
+        txt = txt.strip('`')
+        if txt.lower().startswith('json'):
+            txt = txt[4:]
+    import re
+    try:
+        cleaned = re.sub(r'^json', '', txt, flags=re.IGNORECASE).strip()
+        import json as _json
+        obj = _json.loads(cleaned)
+        if isinstance(obj, dict) and isinstance(obj.get('analyses'), list):
+            norm = []
+            for item in obj['analyses']:
+                if not isinstance(item, dict):
+                    continue
+                user = str(item.get('user') or '').strip()
+                if not user:
+                    continue
+                norm.append({
+                    'user': user,
+                    'emotion': str(item.get('emotion') or 'neutral'),
+                    'inference': str(item.get('inference') or '').strip(),
+                    'suggested_reply': str(item.get('suggested_reply') or '').strip(),
+                })
+            return norm
+    except Exception as e:
+        print('[parse analyses] failed to parse json:', e)
+    return []
+
+
+def _fallback_analyses(grouped):
+    analyses = []
+    for user, msgs in grouped.items():
+        last = msgs[-1] if msgs else ''
+        analyses.append({
+            'user': user,
+            'emotion': 'uncertain',
+            'inference': f'Not enough signal; latest says: "{last}"',
+            'suggested_reply': 'Check in gently and ask how they feel.',
+        })
+    return analyses
+
+
 def create_app():
     app = web.Application()
     app.router.add_get('/', index)
     app.router.add_get('/chat', chat_page)
     app.router.add_get('/ws', handle_ws)
+    app.router.add_post('/analyze_users', analyze_users)
     app.router.add_post('/autocomplete_ai', autocomplete_ai)
     app.router.add_static('/static/', path=str(STATIC_DIR), name='static')
     return app
