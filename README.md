@@ -31,3 +31,7 @@ python main.py
 
 常见问题
 - 提示 `ZHIPU_API_KEY not set`：确认已在当前 PowerShell 会话执行 `$env:ZHIPU_API_KEY="你的apikey"`，且启动命令在同一会话运行。
+
+
+github链接
+https://github.com/ldld13/Real-time-chat
