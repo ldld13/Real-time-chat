@@ -246,7 +246,7 @@ async def autocomplete_ai(request):
     def call_api():
         # prompt: polish/complete user's message with concise, polite replies that continue the intent
         messages = [
-            {"role": "system", "content": "你是话术/补全助手，请根据我的输入的词来理解我的语义，以同样的人称视角生成 3 条自然、口语友好、礼貌得体的续写/改写/补全，帮助完善表达（如把简短词组扩展为完整问候或礼貌询问）。每条不超过 40 字，只输出候选文本，每条单独一行，不要编号、不加额外说明。"},
+            {"role": "system", "content": "你是一个文本补全助手。请根据用户输入的内容，以第一人称视角，生成3个最可能的、自然的、口语化的续写。专注于延续用户的思路，而不是改写或重新解释。每条续写不超过40个字，只输出续写文本，每条单独一行，不要编号或添加任何额外说明。"},
             {"role": "user", "content": f"用户输入：\"{text}\""}
         ]
         attempts = 3
